@@ -7,7 +7,7 @@
 <br>
 
 <p align="center">
-  <a href="https://video-o3.github.io/">
+  <a href="https://mcg-nju.github.io/Video-o3/">
     <img src="https://img.shields.io/badge/Project-Page-orange.svg" alt="Homepage">
   </a>
   <a href="https://arxiv.org/abs/2601.23224">
