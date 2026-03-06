@@ -8,7 +8,7 @@ DATA_LIST=(
     'VideoMMMU_2fps_limit_768'
     'MMVU_2fps_limit_768'
     'Video_Holmes_2fps_limit_768'
-    'Charades_2fps_limit_768' # corresponds to video-o3-charades
+    'Charades_2fps_limit_768' # corresponds to video-o3-tg
 ) 
 
 MODEL_LIST=(
