@@ -1,6 +1,6 @@
 <div align="center">
 
-<h2><a href="https://arxiv.org/abs/2601.23224">Video-o3: Native Interleaved Clue Seeking for Long Video Multi-Hop Reasoning</a></h2>
+<h2><a href="https://arxiv.org/abs/2601.23224">[ICML 2026] Video-o3: Native Interleaved Clue Seeking for Long Video Multi-Hop Reasoning</a></h2>
 
 [Xiangyu Zeng](https://lanxingxuan.github.io/)\*, Zhiqiu Zhang\*, [Yuhan Zhu](https://zyuhan1999.github.io/)\*, [Xinhao Li](https://leexinhao.github.io/)\*, Zikang Wang\*, Changlian Ma, [Qingyu Zhang](https://happyzqy.github.io/), Zizheng Huang, Kun Ouyang, Tianxiang Jiang, Ziang Yan, Yi Wang, Hongjie Zhang, Yali Wang, and [Limin Wang](https://wanglimin.github.io/)†
 
