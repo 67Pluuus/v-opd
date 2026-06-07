@@ -27,7 +27,7 @@ Ensure that the training data is placed in the following directory:
 **Video Data Setup:**
 1. Download all required video files.
  - **CGBench:** [https://huggingface.co/datasets/CG-Bench/CG-Bench/tree/main](https://huggingface.co/datasets/CG-Bench/CG-Bench/tree/main)
-* **LLaVA-Video:** [https://huggingface.co/datasets/lmms-lab/LLaVA-Video-178K/tree/main/2_3_m_youtube_v0_1](https://huggingface.co/datasets/lmms-lab/LLaVA-Video-178K/tree/main/2_3_m_youtube_v0_1)
+ - **LLaVA-Video:** [https://huggingface.co/datasets/lmms-lab/LLaVA-Video-178K/tree/main/2_3_m_youtube_v0_1](https://huggingface.co/datasets/lmms-lab/LLaVA-Video-178K/tree/main/2_3_m_youtube_v0_1)
  - **LongVideoDB:** [https://huggingface.co/datasets/LongVideos/LongVideoDB-373K-Videos/tree/main](https://huggingface.co/datasets/LongVideos/LongVideoDB-373K-Videos/tree/main)
  - **LongVT:** [https://huggingface.co/datasets/longvideotool/LongVT-Source/tree/main](https://huggingface.co/datasets/longvideotool/LongVT-Source/tree/main)
  - **LongVideoReason:** [https://huggingface.co/datasets/LongVideo-Reason/longvideo-reason/tree/main](https://huggingface.co/datasets/LongVideo-Reason/longvideo-reason/tree/main)
