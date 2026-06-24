@@ -1,13 +1,13 @@
 model:
-  student_model_name_or_path: SFT/saves/video-o3-tiny-student-sft/ckpt
-  teacher_model_name_or_path: model/Video-o3_SFT_RL
+  student_model_name_or_path: ../saves/video-o3-tiny-student-sft/ckpt
+  teacher_model_name_or_path: ../model/Video-o3_SFT_RL
   dtype: bfloat16
   trust_remote_code: true
   gradient_checkpointing: true
 
 data:
   dataset: data/tiny_opd_train.jsonl
-  media_dir: dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
+  media_dir: ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
   num_workers: 0
   shuffle: true
   seed: 42
@@ -31,7 +31,7 @@ generation:
   use_cache: true
 
 train:
-  output_dir: saves/opd-small
+  output_dir: ../saves/opd-small
   per_device_train_batch_size: 1
   gradient_accumulation_steps: 4
   learning_rate: 1.0e-6

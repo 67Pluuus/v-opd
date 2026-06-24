@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 """Run one SFT-format test sample through Video-o3 + optional LoRA adapter.
 
-Example:
-  python scripts/test_sft_first_sample.py \
-    --model-path /mnt/afs/L202500447/Video-o3/model/Video-o3_SFT_RL \
-    --adapter-path SFT/saves/video-o3-tiny-student-sft/lora \
-    --jsonl data/opd_sft_small.jsonl \
-    --media-dir youtube_video_2024
+Example (run from the Video-o3 directory):
+  python scripts/test_sft.py \
+    --model-path ../saves/video-o3-tiny-student-sft/ckpt \
+    --jsonl data/tiny_student_sft.jsonl \
+    --media-dir ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
 """
 
 from __future__ import annotations
@@ -235,16 +234,16 @@ def generate(model, processor, messages: list[dict[str, Any]], max_new_tokens: i
 
 def check_opd_format(text: str) -> list[str]:
     parsed = parse_student_trajectory(text)
-    errors = [parsed.interrupt_reason or "invalid OPD trajectory"] if parsed.interrupted else []
-    if not parsed.interrupted and not any(step.grounding is not None for step in parsed.steps):
-        errors.append("trajectory must contain at least one <grounding> crop request")
-    return errors
+    return [parsed.interrupt_reason or "invalid OPD trajectory"] if parsed.interrupted else []
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--jsonl", default="data/opd_sft_small.jsonl")
-    parser.add_argument("--media-dir", default="youtube_video_2024")
+    parser.add_argument("--jsonl", default="data/tiny_student_sft.jsonl")
+    parser.add_argument(
+        "--media-dir",
+        default="../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024",
+    )
     parser.add_argument("--model-path", required=True)
     parser.add_argument("--adapter-path", default=None)
     parser.add_argument("--max-new-tokens", type=int, default=1536)

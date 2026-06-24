@@ -1,7 +1,9 @@
+import json
 from pathlib import Path
 
 import pytest
 import torch
+import yaml
 
 from opd.config import load_opd_config
 from opd.loss import reverse_kl_from_distributions, reverse_kl_sum_from_distributions
@@ -53,6 +55,36 @@ def test_loads_production_yaml():
     assert config.train.exact_reverse_kl
     assert config.video.coarse_tokens < config.video.medium_tokens < config.video.fine_tokens
     assert config.train.gradient_accumulation_steps == 4
+
+
+def test_training_paths_resolve_to_shared_root():
+    repo = Path(__file__).resolve().parents[1]
+    shared_root = repo.parent
+
+    config = load_opd_config(repo / "configs" / "opd_small.yaml")
+    assert (repo / config.model.student_model_name_or_path).resolve() == (
+        shared_root / "saves" / "video-o3-tiny-student-sft" / "ckpt"
+    )
+    assert (repo / config.model.teacher_model_name_or_path).resolve() == (
+        shared_root / "model" / "Video-o3_SFT_RL"
+    )
+    assert (repo / config.train.output_dir).resolve() == shared_root / "saves" / "opd-small"
+    assert (repo / config.data.dataset).is_file()
+
+    sft_root = repo / "SFT"
+    sft_config = yaml.safe_load(
+        (sft_root / "examples" / "video_o3_tiny_student_sft.yaml").read_text(encoding="utf-8")
+    )
+    dataset_dir = (sft_root / sft_config["dataset_dir"]).resolve()
+    registry = json.loads((dataset_dir / "dataset_info.json").read_text(encoding="utf-8"))
+    dataset_entry = registry[sft_config["dataset"]]
+    assert (dataset_dir / dataset_entry["file_name"]).is_file()
+    assert (sft_root / sft_config["model_name_or_path"]).resolve() == (
+        shared_root / "model" / "Video-o3_SFT_RL"
+    )
+    assert (sft_root / sft_config["output_dir"]).resolve() == (
+        shared_root / "saves" / "video-o3-tiny-student-sft" / "ckpt"
+    )
 
 
 def test_loads_target_debug_yaml():

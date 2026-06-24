@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: ../model/Video-o3_SFT_RL
+model_name_or_path: ../../model/Video-o3_SFT_RL
 image_max_pixels: 262144
 # video_max_pixels: 602112
 # video_min_pixels: 100352
@@ -26,8 +26,8 @@ deepspeed: examples/deepspeed/ds_z3_offload_config.json
 
 ### dataset
 dataset_dir: ../data
-dataset: tiny_student_sft
-media_dir: ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
+dataset: student_sft
+media_dir: ../../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
 template: qwen2_vl
 # cutoff_len: 40000
 cutoff_len: 16000
@@ -41,7 +41,7 @@ accelerator_config:
 # tokenized_path: saves/video-o3-tiny-student-sft/dataset-full
 
 ### output
-output_dir: saves/video-o3-tiny-student-sft/ckpt
+output_dir: ../../saves/video-o3-tiny-student-sft/ckpt
 logging_steps: 1
 save_steps: 20
 save_total_limit: 1

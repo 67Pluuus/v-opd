@@ -20,7 +20,7 @@ Video-o3/Qwen2.5-VL 模型、chat template 和视频处理逻辑。
 
 ```bash
 python scripts/build_sft_from_seeker.py \
-  --input dataset/Seeker-173k/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
+  --input ../dataset/Seeker-173K/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
   --output data/student_sft.jsonl
 ```
 
@@ -40,7 +40,7 @@ python scripts/build_opd_from_seeker.py \
 
 ```bash
 python scripts/build_opd_from_seeker.py \
-  --input dataset/Seeker-173k/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
+  --input ../dataset/Seeker-173K/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
   --output data/opd_train.jsonl
 ```
 
@@ -51,54 +51,8 @@ OPD 样本分别保存：
 - `videos`：原始完整视频；
 - `student_target`：仅用于数据检查，不参与正常 on-policy 训练。
 
-检查轨迹和 teacher task 对齐：
 
-```bash
-python scripts/run_opd.py --dataset data/tiny_opd_train.jsonl --dry-run
-```
-
-## 3. Student 尚未学会格式时调试完整 OPD 链路
-
-如果 student 能读取视频和问题，但自由生成还不能满足 OPD 标签格式，可以启用
-`student_from_target` 调试模式。该模式只旁路第一步的自由生成：
-
-```text
-student 自由生成                              跳过
-data.student_target                           作为本轮轨迹
-轨迹解析和 grounding 合法性检查               执行
-按 grounding 读取和裁剪真实视频               执行
-构造 teacher 多轮 Observation 上下文          执行
-student 对 student_target 做 teacher forcing  执行并保留梯度
-teacher 对相同 target 做 teacher forcing      执行
-精确 KL、backward、optimizer、checkpoint       全部执行
-```
-
-这里不是把整条 `student_target` 简单拼进 teacher prompt。代码仍先解析轨迹，
-再按每个 grounding 拆成多个 task；teacher 逐 task 接收先前 action 和对应的真实
-裁剪视频，并对当前 target token 计算分布。
-
-仓库提供了一份单 step 调试配置：
-
-```bash
-python scripts/train_opd.py \
-  --config configs/opd_debug_target.yaml \
-  --reverse-kl-exact
-```
-
-也可以在任意配置上临时启用：
-
-```bash
-python scripts/train_opd.py \
-  --config configs/opd_small.yaml \
-  --reverse-kl-exact \
-  --student-from-target
-```
-
-日志会显示 `trajectory_source=student_target`。调试数据必须包含非空
-`student_target`。确认动态裁剪、teacher forward、精确 KL、backward 和
-checkpoint 都正常后，应关闭该选项；否则轨迹来自数据集，不是严格的 on-policy。
-
-## 4. 配置
+## 3. 配置
 
 生产训练入口直接读取 [configs/opd_small.yaml](configs/opd_small.yaml)，包括：
 
@@ -113,7 +67,7 @@ checkpoint 都正常后，应关闭该选项；否则轨迹来自数据集，不
 
 裁剪视频使用 `crop_fps`，不会再被原视频的固定 `nframes` 覆盖。
 
-## 5. 单卡训练
+## 4. 单卡训练
 
 安装 SFT/Video-o3 依赖后：
 
@@ -137,7 +91,7 @@ output_dir/
 scheduler、随机数状态、processor 和训练进度；其内部文件布局取决于是否启用
 DeepSpeed。中间目录主要用于恢复训练，最终 `output_dir` 用于推理。
 
-## 6. DDP
+## 5. DDP
 
 Accelerate 会自动将同一训练入口包装成 DDP：
 
@@ -149,7 +103,7 @@ accelerate launch --multi_gpu --num_processes 8 \
 ```
 
 
-## 7. DeepSpeed
+## 6. DeepSpeed
 
 在 YAML 中设置：
 
@@ -171,7 +125,7 @@ accelerate launch --multi_gpu --num_processes 8 \
 `SFT/examples/deepspeed/`。teacher 始终冻结，每个进程保留一份 teacher；
 DeepSpeed 负责 student、optimizer 和梯度状态。
 
-## 8. 断点恢复
+## 7. 断点恢复
 
 恢复指定 checkpoint：
 
@@ -179,7 +133,7 @@ DeepSpeed 负责 student、optimizer 和梯度状态。
 accelerate launch scripts/train_opd.py \
   --config configs/opd_small.yaml \
   --reverse-kl-exact \
-  --resume-from-checkpoint saves/opd-small/checkpoint-40
+  --resume-from-checkpoint ../saves/opd-small/checkpoint-40
 ```
 
 恢复最新 checkpoint：
@@ -193,22 +147,21 @@ accelerate launch scripts/train_opd.py \
 
 数据 sampler 由 `seed + epoch` 确定，恢复时会跳过已经完成的 microbatch。
 
-## 9. 测试 OPD 模型
+## 8. 测试 OPD 模型
 
 `test_opd.py` 加载最终 OPD student，生成一条 on-policy 轨迹，并检查：
 
 - 视频时长；
 - grounding 是否越界；
 - 标签和 JSON 格式；
-- 是否至少包含一次 grounding；
 - 可拆分出的 teacher task 数；
 - 最终 answer。
 
 ```bash
 python scripts/test_opd.py \
   --dataset data/opd_train.jsonl \
-  --model-path saves/opd-small \
-  --media-dir /path/to/videos \
+  --model-path ../saves/opd-small \
+  --media-dir ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024 \
   --sample-index 0
 ```
 

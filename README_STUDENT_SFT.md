@@ -24,7 +24,11 @@
 下列命令默认项目根目录为：
 
 ```text
-Video-o3/
+OPD
+```
+
+```bash
+cd Video-o3
 ```
 
 安装项目内的 LLaMA-Factory：
@@ -39,7 +43,7 @@ cd ..
 
 准备以下文件：
 
-- Video-o3 基础模型：`model/Video-o3_SFT_RL`
+- Video-o3 基础模型：`../model/Video-o3_SFT_RL`
 - Seeker-173K 标注文件
 - 标注中引用的原始视频文件
 
@@ -54,7 +58,7 @@ cd ..
 
 ```bash
 python data/build_tiny_trainset.py \
-  --input-json ../dataset/Seeker-173k/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
+  --input-json ../dataset/Seeker-173K/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
   --video-dir ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024 \
   --output-json data/filtered.json
 ```
@@ -71,7 +75,7 @@ python scripts/build_sft_from_seeker.py \
 
 ```bash
 python scripts/build_sft_from_seeker.py \
-  --input dataset/Seeker-173k/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
+  --input ../dataset/Seeker-173K/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
   --output data/student_sft.jsonl
 ```
 
@@ -98,10 +102,10 @@ SFT/examples/video_o3_tiny_student_sft.yaml
 运行前重点检查：
 
 ```yaml
-model_name_or_path: ../model/Video-o3_SFT_RL
+model_name_or_path: ../../model/Video-o3_SFT_RL
 dataset: student_sft
-media_dir: ../dataset/LLaVA-Video-178K/...
-output_dir: saves/video-o3-tiny-student-sft/ckpt
+media_dir: ../../dataset/LLaVA-Video-178K/...
+output_dir: ../../saves/video-o3-tiny-student-sft/ckpt
 ```
 
 当前配置用于小规模联调：
@@ -140,7 +144,7 @@ FORCE_TORCHRUN=1 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 默认 checkpoint 输出到：
 
 ```text
-SFT/saves/video-o3-tiny-student-sft/ckpt
+../../saves/video-o3-tiny-student-sft/ckpt
 ```
 
 ## 5. 单样本推理
@@ -162,9 +166,9 @@ cd ..
 
 ```bash
 python scripts/test_sft.py \
-  --model-path SFT/saves/video-o3-tiny-student-sft/ckpt \
+  --model-path ../saves/video-o3-tiny-student-sft/ckpt \
   --jsonl data/tiny_student_sft.jsonl \
-  --media-dir dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024 \
+  --media-dir ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024 \
   --dtype bf16 \
   --max-new-tokens 1536 \
   --video-nframes 128
@@ -214,7 +218,7 @@ max_new_tokens: 1536
 视频推理显存占用较大，建议先保持 batch size 为 1。批量推理结果保存在：
 
 ```text
-SFT/saves/video-o3-tiny-student-sft/infer/generated_predictions.jsonl
+../../saves/video-o3-tiny-student-sft/infer/generated_predictions.jsonl
 ```
 
 每一行包含：
@@ -267,4 +271,3 @@ eval_dataset: student_sft
 - grounding 是严格 JSON
 - `<answer>...</answer>` 位于外层 `</think>` 之后
 - `</answer>` 后没有额外内容
-

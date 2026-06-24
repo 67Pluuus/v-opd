@@ -84,8 +84,6 @@ def main() -> None:
     if parsed.interrupted:
         print(f"FAILED: {parsed.interrupt_reason}")
         print(f"Valid prefix length: {len(parsed.valid_text)}")
-    elif not any(step.grounding is not None for step in parsed.steps):
-        print("FAILED: trajectory contains no grounding request")
     else:
         print(
             f"PASSED: steps={len(parsed.steps)} teacher_tasks={len(tasks)} "

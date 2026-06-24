@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: saves/video-o3-tiny-student-sft/ckpt
+model_name_or_path: ../../saves/video-o3-tiny-student-sft/ckpt
 image_max_pixels: 262144
 video_max_pixels: 602112
 video_min_pixels: 100352
@@ -20,7 +20,7 @@ finetuning_type: full
 dataset_dir: ../data
 # Key registered in ../data/dataset_info.json.
 eval_dataset: student_sft
-media_dir: ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
+media_dir: ../../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
 template: qwen2_vl
 cutoff_len: 40000
 overwrite_cache: true
@@ -32,7 +32,7 @@ accelerator_config:
 tokenized_path: null
 
 ### output
-output_dir: saves/video-o3-tiny-student-sft/infer
+output_dir: ../../saves/video-o3-tiny-student-sft/infer
 logging_steps: 1
 overwrite_output_dir: true
 report_to: none

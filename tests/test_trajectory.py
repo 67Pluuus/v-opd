@@ -1,3 +1,5 @@
+import pytest
+
 from opd.trajectory import (
     build_single_turn_messages,
     parse_student_trajectory,
@@ -43,10 +45,23 @@ def test_teacher_task_alignment():
 
 
 def test_rejects_text_after_answer():
-    text = "<think><think>a</think></think><answer>A</answer>extra"
+    text = (
+        "<think><think>a</think>"
+        '<grounding>{"temporal_segment":[1,3],"sampling_strategy":"coarse"}</grounding>'
+        "<think>b</think></think><answer>A</answer>extra"
+    )
     parsed = parse_student_trajectory(text)
     assert parsed.interrupted
     assert parsed.interrupt_reason == "unexpected text after </answer>"
+
+
+def test_allows_direct_answer_without_grounding():
+    text = "<think><think>the full video is sufficient</think></think><answer>A</answer>"
+    parsed = parse_student_trajectory(text)
+    assert not parsed.interrupted
+    assert parsed.answer == "A"
+    assert len(parsed.steps) == 1
+    assert parsed.steps[0].grounding is None
 
 
 def test_rejects_extra_grounding_keys():
@@ -68,6 +83,67 @@ def test_rejects_non_json_grounding():
     )
     parsed = parse_student_trajectory(text)
     assert parsed.interrupted
+
+
+@pytest.mark.parametrize(
+    ("grounding", "reason"),
+    [
+        (
+            'prefix {"temporal_segment":[1,3],"sampling_strategy":"coarse"}',
+            "Expecting value",
+        ),
+        (
+            '{"temporal_segment":[1,3],"temporal_segment":[2,4],"sampling_strategy":"coarse"}',
+            "duplicate key",
+        ),
+        (
+            '{"temporal_segment":[true,3],"sampling_strategy":"coarse"}',
+            "finite numbers",
+        ),
+        (
+            '{"temporal_segment":[NaN,3],"sampling_strategy":"coarse"}',
+            "non-finite number",
+        ),
+    ],
+)
+def test_rejects_non_strict_grounding_json(grounding, reason):
+    text = (
+        "<think><think>a</think>"
+        f"<grounding>{grounding}</grounding>"
+        "<think>b</think></think><answer>A</answer>"
+    )
+    parsed = parse_student_trajectory(text)
+    assert parsed.interrupted
+    assert reason in parsed.interrupt_reason
+
+
+@pytest.mark.parametrize(
+    ("text", "reason"),
+    [
+        (
+            "<think><think> </think></think><answer>A</answer>",
+            "inner <think> must not be empty",
+        ),
+        (
+            "<think><think>a <tool>x</tool></think></think><answer>A</answer>",
+            "must not contain tags",
+        ),
+        (
+            '<think><think>a</think><grounding>{"temporal_segment":[1,3],"sampling_strategy":"coarse"}</grounding>'
+            "<think>b</think></think><answer></answer>",
+            "exactly one uppercase option letter",
+        ),
+        (
+            '<think><think>a</think><grounding>{"temporal_segment":[1,3],"sampling_strategy":"coarse"}</grounding>'
+            "<think>b</think></think><answer>Option A</answer>",
+            "exactly one uppercase option letter",
+        ),
+    ],
+)
+def test_rejects_remaining_format_errors(text, reason):
+    parsed = parse_student_trajectory(text)
+    assert parsed.interrupted
+    assert reason in parsed.interrupt_reason
 
 
 def test_rewrites_multiturn_user_instruction():

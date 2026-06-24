@@ -1,5 +1,5 @@
 {
-  "tiny_student_sft": {
+  "student_sft": {
     "file_name": "tiny_student_sft.jsonl",
     "formatting": "sharegpt",
     "columns": {

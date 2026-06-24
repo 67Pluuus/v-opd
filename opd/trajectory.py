@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import dataclass, field
 from typing import Any, Iterable
@@ -65,13 +66,25 @@ OBSERVATION_PROMPT_TEMPLATE = (
 
 
 def _extract_json(raw: str) -> dict[str, Any]:
-    start = raw.find("{")
-    end = raw.rfind("}")
-    if start < 0 or end <= start:
-        raise ValueError("grounding payload does not contain a JSON object")
+    def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        obj: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in obj:
+                raise ValueError(f"grounding JSON contains duplicate key: {key}")
+            obj[key] = value
+        return obj
 
-    payload = raw[start : end + 1]
-    return json.loads(payload)
+    def reject_non_finite(value: str) -> Any:
+        raise ValueError(f"grounding JSON contains non-finite number: {value}")
+
+    payload = json.loads(
+        raw.strip(),
+        object_pairs_hook=reject_duplicate_keys,
+        parse_constant=reject_non_finite,
+    )
+    if not isinstance(payload, dict):
+        raise ValueError("grounding payload must be a JSON object")
+    return payload
 
 
 def _skip_ws(text: str, pos: int) -> int:
@@ -94,12 +107,14 @@ def parse_grounding(raw: str, video_duration: float | None = None) -> GroundingC
     strategy = obj["sampling_strategy"]
     if not isinstance(segment, (list, tuple)) or len(segment) != 2:
         raise ValueError("temporal_segment must be a pair")
-    if not all(isinstance(x, (int, float)) for x in segment):
-        raise ValueError("temporal_segment values must be numeric")
+    if not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in segment):
+        raise ValueError("temporal_segment values must be finite numbers")
     if not isinstance(strategy, str) or strategy not in VALID_SAMPLING:
         raise ValueError("sampling_strategy must be one of coarse, medium, fine")
 
     start, end = float(segment[0]), float(segment[1])
+    if not math.isfinite(start) or not math.isfinite(end):
+        raise ValueError("temporal_segment values must be finite numbers")
     if start < 0 or end <= start:
         raise ValueError("temporal_segment must satisfy 0 <= start < end")
     if end - start < 1.0:
@@ -137,6 +152,17 @@ def parse_student_trajectory(text: str, video_duration: float | None = None) -> 
 
         think_end = think_close + len(INNER_THINK_CLOSE)
         step_text = text[think_start:think_end]
+        reasoning = text[think_start + len(INNER_THINK_OPEN) : think_close]
+        if not reasoning.strip():
+            return ParsedTrajectory(text[:valid_end], steps, None, True, "inner <think> must not be empty")
+        if re.search(r"</?[A-Za-z][^>]*>", reasoning):
+            return ParsedTrajectory(
+                text[:valid_end],
+                steps,
+                None,
+                True,
+                "inner <think> reasoning must not contain tags",
+            )
         valid_end = think_end
         pos = _skip_ws(text, think_end)
 
@@ -188,6 +214,15 @@ def parse_student_trajectory(text: str, video_duration: float | None = None) -> 
 
     answer_end = answer_close + len(ANSWER_CLOSE)
     answer = text[pos + len(ANSWER_OPEN) : answer_close]
+    if not re.fullmatch(r"[A-Z]", answer.strip()):
+        return ParsedTrajectory(
+            text[:valid_end],
+            steps,
+            None,
+            True,
+            "answer must contain exactly one uppercase option letter",
+        )
+    answer = answer.strip()
     if text[answer_end:].strip():
         return ParsedTrajectory(text[:answer_end], steps, answer, True, "unexpected text after </answer>")
     return ParsedTrajectory(text[:answer_end], steps, answer, False, None)
@@ -253,9 +288,9 @@ def rewrite_system_prompt(system_prompt: str) -> str:
         "Requirements:\n"
         "1. Use exactly one outer <think>...</think> block.\n"
         "2. Put every reasoning step in its own inner <think>...</think> block.\n"
-        "3. Emit at least one <grounding> block. Each grounding must be strict JSON with exactly "
-        "\"temporal_segment\" and \"sampling_strategy\". Use original-video timestamps, 0 <= t0 < t1, "
-        "and choose one strategy from \"coarse\", \"medium\", or \"fine\".\n"
+        "3. A <grounding> block is optional. Use one only when a temporal crop would help. Each grounding "
+        "must be strict JSON with exactly \"temporal_segment\" and \"sampling_strategy\". Use original-video "
+        "timestamps, 0 <= t0 < t1, and choose one strategy from \"coarse\", \"medium\", or \"fine\".\n"
         "4. The final inner <think>...</think> has no following grounding.\n"
         "5. Put <answer>...</answer> only after the outer </think>.\n"
         "6. Never use <tool>, Observation messages, or any other tags."
@@ -273,10 +308,11 @@ def rewrite_user_prompt(user_prompt: str) -> str:
     ).rstrip()
     return (
         f"{prompt}\n\n"
-        "Produce the complete single-turn OPD trajectory now. Include at least one temporal crop request as "
-        "<grounding> strict JSON, but do not wait for or request a follow-up Observation. The crop executor does "
-        "not return clips to the student model; continue all reasoning in this same response using the original "
-        "video, then close the outer <think> and output <answer>."
+        "Produce the complete single-turn OPD trajectory now. If a temporal crop would help, request it as "
+        "<grounding> strict JSON, but do not wait for or request a follow-up Observation. You may also answer "
+        "directly without grounding when the original full video is sufficient. The crop executor does not return "
+        "clips to the student model; continue all reasoning in this same response using the original video, then "
+        "close the outer <think> and output <answer>."
     )
 
 
