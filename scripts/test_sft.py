@@ -4,7 +4,7 @@
 Example (run from the Video-o3 directory):
   python scripts/test_sft.py \
     --model-path ../saves/video-o3-tiny-student-sft/ckpt \
-    --jsonl data/tiny_student_sft.jsonl \
+    --jsonl data/student_sft.jsonl \
     --media-dir ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
 """
 
@@ -239,7 +239,7 @@ def check_opd_format(text: str) -> list[str]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--jsonl", default="data/tiny_student_sft.jsonl")
+    parser.add_argument("--jsonl", default="data/student_sft.jsonl")
     parser.add_argument(
         "--media-dir",
         default="../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024",

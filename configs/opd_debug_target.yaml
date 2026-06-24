@@ -8,7 +8,7 @@ model:
   gradient_checkpointing: false
 
 data:
-  dataset: data/tiny_opd_train.jsonl
+  dataset: data/opd_train.jsonl
   media_dir: ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
   num_workers: 0
   shuffle: false

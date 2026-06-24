@@ -84,12 +84,12 @@ python scripts/build_sft_from_seeker.py \
 ```bash
 python scripts/build_sft_from_seeker.py \
   --input data/filtered.json \
-  --output data/tiny_student_sft.jsonl \
+  --output data/student_sft.jsonl \
   --max-samples 4
 ```
 
 `data/dataset_info.json` 使用名称 `student_sft` 注册
-`tiny_student_sft.jsonl`。如果修改输出文件名，也需要同步修改该注册文件。
+`student_sft.jsonl`。训练 YAML 中的 `max_samples: 4` 会限制小规模联调使用的样本数，如果修改主输出文件名，也需要同步修改该注册文件。
 
 ## 3. 配置训练
 
@@ -120,7 +120,7 @@ video_maxlen: 8
 
 ## 4. 启动训练
 
-从 `SFT` 目录执行：
+从 `Video-o3` 目录进入 `SFT` 后执行：
 
 ```bash
 cd SFT
@@ -147,6 +147,12 @@ FORCE_TORCHRUN=1 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 ../../saves/video-o3-tiny-student-sft/ckpt
 ```
 
+训练完成后返回 `Video-o3` 目录：
+
+```bash
+cd ..
+```
+
 ## 5. 单样本推理
 
 推理需要配置另一个环境：
@@ -167,7 +173,7 @@ cd ..
 ```bash
 python scripts/test_sft.py \
   --model-path ../saves/video-o3-tiny-student-sft/ckpt \
-  --jsonl data/tiny_student_sft.jsonl \
+  --jsonl data/student_sft.jsonl \
   --media-dir ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024 \
   --dtype bf16 \
   --max-new-tokens 1536 \
@@ -189,12 +195,14 @@ PASSED
 SFT/examples/video_o3_tiny_student_sft_infer.yaml
 ```
 
-从 `SFT` 目录执行：
+从 `Video-o3` 目录进入 `SFT` 后执行：
 
 ```bash
 cd SFT
 llamafactory-cli train examples/video_o3_tiny_student_sft_infer.yaml
 ```
+
+批量推理结束后可执行 `cd ..` 返回 `Video-o3` 目录。
 
 这里仍使用 `train` 子命令，因为 LLaMA-Factory 的 SFT workflow 根据：
 

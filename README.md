@@ -6,6 +6,12 @@ Video-o3/Qwen2.5-VL 模型、chat template 和视频处理逻辑。
 学生模型的 SFT 冷启动说明见
 [README_STUDENT_SFT.md](README_STUDENT_SFT.md)。
 
+下列 OPD 命令均从 `OPD/Video-o3` 目录执行：
+
+```bash
+cd Video-o3
+```
+
 ## 训练逻辑
 
 每个 OPD step 执行：
@@ -33,7 +39,7 @@ python scripts/build_sft_from_seeker.py \
 ```bash
 python scripts/build_opd_from_seeker.py \
   --input data/filtered.json \
-  --output data/tiny_opd_train.jsonl
+  --output data/opd_train.jsonl
 ```
 
 视频完整则运行：
