@@ -1,14 +1,18 @@
-NUM_GPUS=8
+NUM_GPUS=1
+
+# DATA_LIST=(
+#     'Video-MME_2fps_limit_768'
+#     'MLVU_2fps_limit_768'
+#     'LVBench_2fps_limit_768'
+#     'LongVideoBench_2fps_limit_768'
+#     'VideoMMMU_2fps_limit_768'
+#     'MMVU_2fps_limit_768'
+#     'Video_Holmes_2fps_limit_768'
+#     'Charades_2fps_limit_768' # corresponds to video-o3-tg
+# ) 
 
 DATA_LIST=(
     'Video-MME_2fps_limit_768'
-    'MLVU_2fps_limit_768'
-    'LVBench_2fps_limit_768'
-    'LongVideoBench_2fps_limit_768'
-    'VideoMMMU_2fps_limit_768'
-    'MMVU_2fps_limit_768'
-    'Video_Holmes_2fps_limit_768'
-    'Charades_2fps_limit_768' # corresponds to video-o3-tg
 ) 
 
 MODEL_LIST=(

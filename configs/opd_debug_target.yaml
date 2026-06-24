@@ -1,0 +1,55 @@
+# End-to-end OPD plumbing smoke run.
+# It intentionally bypasses student free generation and uses student_target.
+model:
+  student_model_name_or_path: SFT/saves/video-o3-tiny-student-sft/ckpt
+  teacher_model_name_or_path: model/Video-o3_SFT_RL
+  dtype: bfloat16
+  trust_remote_code: true
+  gradient_checkpointing: false
+
+data:
+  dataset: data/tiny_opd_train.jsonl
+  media_dir: dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
+  num_workers: 0
+  shuffle: false
+  seed: 42
+
+video:
+  nframes: 16
+  fps: null
+  crop_fps: 2.0
+  min_pixels: 15680
+  max_pixels: 602112
+  total_pixels: 12845056
+  coarse_tokens: 2048
+  medium_tokens: 4096
+  fine_tokens: 6144
+
+generation:
+  # Ignored while student_from_target is true.
+  max_new_tokens: 2048
+  do_sample: false
+  temperature: 0.7
+  top_p: 0.9
+  use_cache: true
+
+train:
+  output_dir: saves/opd-debug-target
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 1
+  learning_rate: 1.0e-6
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  num_train_epochs: 1
+  max_steps: 1
+  lr_scheduler_type: constant
+  warmup_ratio: 0.0
+  warmup_steps: 0
+  logging_steps: 1
+  save_steps: 1
+  save_total_limit: 1
+  resume_from_checkpoint: null
+  mixed_precision: bf16
+  deepspeed: null
+  exact_reverse_kl: true
+  student_from_target: true

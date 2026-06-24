@@ -1,0 +1,55 @@
+model:
+  student_model_name_or_path: SFT/saves/video-o3-tiny-student-sft/ckpt
+  teacher_model_name_or_path: model/Video-o3_SFT_RL
+  dtype: bfloat16
+  trust_remote_code: true
+  gradient_checkpointing: true
+
+data:
+  dataset: data/tiny_opd_train.jsonl
+  media_dir: dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
+  num_workers: 0
+  shuffle: true
+  seed: 42
+
+video:
+  nframes: 128
+  fps: null
+  crop_fps: 2.0
+  min_pixels: 15680
+  max_pixels: 602112
+  total_pixels: 12845056
+  coarse_tokens: 2048
+  medium_tokens: 4096
+  fine_tokens: 6144
+
+generation:
+  max_new_tokens: 2048
+  do_sample: true
+  temperature: 0.7
+  top_p: 0.9
+  use_cache: true
+
+train:
+  output_dir: saves/opd-small
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 4
+  learning_rate: 1.0e-6
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  num_train_epochs: 1
+  max_steps: 100
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.1
+  warmup_steps: 0
+  logging_steps: 1
+  save_steps: 20
+  save_total_limit: 2
+  resume_from_checkpoint: null
+  mixed_precision: bf16
+  # Set this to an existing DeepSpeed JSON, for example:
+  # SFT/examples/deepspeed/ds_z2_config.json
+  deepspeed: null
+  exact_reverse_kl: true
+  # Debug only. true bypasses student generation and uses dataset student_target.
+  student_from_target: false

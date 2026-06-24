@@ -1,0 +1,23 @@
+Debug: Current working directory: /mnt/afs/L202500447/Video-o3/Eval
+Debug: All received parameters:
+  $1 (DATA): 'Video-MME_2fps_limit_768'
+  $2 (MODEL): 'video-o3'
+  $3 (MODE): 'all'
+  $4 (REUSE): '--reuse'
+  $5 (NPROC_PER_NODE): '1'
+  $6 (WORK_DIR): './runlogs/video-o3/outputs'
+  Total number of parameters: 6
+
+CondaError: Run 'conda init' before 'conda activate'
+
+Run command: torchrun --nproc-per-node=1 run.py --data Video-MME_2fps_limit_768 --model video-o3 --mode all --work-dir ./runlogs/video-o3/outputs --reuse
+--------------------------------
+[0, 1]
+1
+0
+--------------------------------
+Please install pyav to use video processing functions.
+[2026-06-22 06:32:56] WARNING - RUN - run.py: main - 228: --reuse is set, will reuse the latest prediction & temporary pickle files
+[2026-06-22 06:32:56] CRITICAL - video_base.py: __init__ - 17: <class 'ModuleNotFoundError'>: No module named 'decord'
+[2026-06-22 06:32:56] CRITICAL - video_base.py: __init__ - 18: Please install decord via `pip install decord`.
+target_dir:  /mnt/afs/L202500447/Video-o3/dataset/VideoMME/video/

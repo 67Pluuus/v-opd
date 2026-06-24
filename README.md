@@ -1,287 +1,222 @@
-<div align="center">
+# O3-OPD
 
-<h2><a href="https://arxiv.org/abs/2601.23224">[ICML 2026] Video-o3: Native Interleaved Clue Seeking for Long Video Multi-Hop Reasoning</a></h2>
+Video-o3 的 On-Policy Distillation 训练实现。OPD 代码复用仓库现有的
+Video-o3/Qwen2.5-VL 模型、chat template 和视频处理逻辑。
 
-[Xiangyu Zeng](https://lanxingxuan.github.io/)\*, Zhiqiu Zhang\*, [Yuhan Zhu](https://zyuhan1999.github.io/)\*, [Xinhao Li](https://leexinhao.github.io/)\*, Zikang Wang\*, Changlian Ma, [Qingyu Zhang](https://happyzqy.github.io/), Zizheng Huang, Kun Ouyang, Tianxiang Jiang, Ziang Yan, Yi Wang, Hongjie Zhang, Yali Wang, and [Limin Wang](https://wanglimin.github.io/)†
+学生模型的 SFT 冷启动说明见
+[README_STUDENT_SFT.md](README_STUDENT_SFT.md)。
 
-<br>
+## 训练逻辑
 
-<p align="center">
-  <a href="https://mcg-nju.github.io/Video-o3/">
-    <img src="https://img.shields.io/badge/Project-Page-orange.svg" alt="Homepage">
-  </a>
-  <a href="https://arxiv.org/abs/2601.23224">
-    <img src="https://img.shields.io/badge/Paper-arXiv-b31b1b.svg" alt="Paper">
-  </a>
-  <a href="https://huggingface.co/collections/MCG-NJU/video-o3">
-    <img src="https://img.shields.io/badge/Model-HuggingFace-yellow.svg" alt="Model">
-  </a>
-  <a href="https://huggingface.co/datasets/MCG-NJU/Seeker-173K">
-    <img src="https://img.shields.io/badge/Data-Seeker--173K-blue.svg" alt="Data">
-  </a>
-</p>
+每个 OPD step 执行：
 
-</div>
+1. student 根据原始完整视频和问题，用当前参数一次生成完整轨迹；
+2. 严格解析 `<think>`、`<grounding>` 和 `<answer>`，非法轨迹只保留合法前缀；
+3. 根据 student 自己选择的时间段动态构造 teacher 多轮观察上下文；
+4. student 在单轮累计前缀下、teacher 在原视频及裁剪视频上下文下对相同 target token 做 teacher forcing；
+5. 在完整词表上计算精确的 `KL(teacher || student)`，只更新 student。
 
-## :fire: Updates
-- [x] **2026/02/16**: 🔥🔥🔥Release the training code for SFT and RL.
-- [x] **2026/02/15**: 🔥🔥🔥Release the evaluation code for Video-o3.
-- [x] **2026/02/10**: 🔥🔥🔥Release the checkpoint of **[Video-o3 (RL)](https://huggingface.co/collections/MCG-NJU/video-o3)** and **[Video-o3 (SFT+RL)](https://huggingface.co/collections/MCG-NJU/video-o3)**.
-- [x] **2026/02/10**: 🔥🔥🔥Release **[Seeker-173K](https://huggingface.co/datasets/MCG-NJU/Seeker-173K)**, a large-scale dataset comprising 173K high-quality tool-interaction trajectories for effective supervised and reinforcement learning.
-- [x] **2026/01/30**: 🔥🔥🔥Release the paper of **[Video-o3](https://arxiv.org/abs/2601.23224)**, a novel framework that supports native interleaved clue seeking for long video multi-hop reasoning.
+## 1. 构建 SFT 冷启动数据
 
-## 📑 Todo List
-- [ ] Refine the user documentation and tutorials.
-- [ ] Update with more engaging and interactive demos.
-- [ ] Provide a streamlined guide for quick inference.
+```bash
+python scripts/build_sft_from_seeker.py \
+  --input dataset/Seeker-173k/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
+  --output data/student_sft.jsonl
+```
 
+然后按 `README_STUDENT_SFT.md` 训练 student。
 
+## 2. 构建 OPD 数据
 
-## 🧠 Motivation: Thinking with Videos
+如果 Seeker 标注包含尚未下载的视频，可先筛选视频真实存在的样本，参考`README_STUDENT_SFT.md`，然后运行：
 
-Current Multimodal Large Language Models (MLLMs) struggle with long videos because they typically rely on uniform frame sampling and single-turn inference. This approach often dilutes critical visual evidence within redundant background content.
+```bash
+python scripts/build_opd_from_seeker.py \
+  --input data/filtered.json \
+  --output data/tiny_opd_train.jsonl
+```
 
-Video-o3 introduces a paradigm shift by mimicking human behavior. Instead of watching a video passively, it actively explores the content. The model iteratively discovers salient visual clues, inspects key segments with fine-grained detail, and adaptively terminates the search once sufficient evidence is acquired.
+视频完整则运行：
 
-<div align="center">
-  <img src="src/Figure1.png" width="100%"/>
-  <br>
-  <em>Overview of Video-o3. Guided by the user query, the model actively identifies and localizes critical visual clues using native interleaved tool invocation. It autonomously decides whether to continue searching or to conclude the reasoning process.</em>
-</div>
+```bash
+python scripts/build_opd_from_seeker.py \
+  --input dataset/Seeker-173k/SFT/sft_llava-video_youtube_qa_mc_2_3_m_clue_multi_w_tool_diff_2790.json \
+  --output data/opd_train.jsonl
+```
 
-**Key Features:**
+OPD 样本分别保存：
 
-*   **Goal-Driven Exploration:** Unlike models that scan the whole video coarsely, Video-o3 starts with a coarse scan and iteratively focuses on informative segments.
-*   **Native Interleaved Tool Use:** The model supports "clue seeking" and "answer reasoning" within a single shared context, rather than decoupled modules.
+- `student_messages`：要求单次输出完整轨迹的 student prompt；
+- `teacher_messages`：原始 Video-o3 多轮工具 prompt；
+- `videos`：原始完整视频；
+- `student_target`：仅用于数据检查，不参与正常 on-policy 训练。
 
-## 🛠️ Method: Native Interleaved Tool Invocation
+检查轨迹和 teacher task 对齐：
 
-Video-o3 is designed to solve the challenges of attention dispersion and contextual efficiency in long-video processing. The framework operates on a Think-and-Tool cycle. The model generates structured directives containing temporal windows and visual token quotas. It dynamically invokes the VideoCrop tool to inspect target segments with adaptive spatiotemporal resolution.
+```bash
+python scripts/run_opd.py --dataset data/tiny_opd_train.jsonl --dry-run
+```
 
-<div align="center">
-  <img src="src/Figure3.png" width="100%"/>
-  <br>
-  <em>Architectural Overview. Video-o3 dynamically executes tool invocations based on previous reasoning to scrutinize specific clue segments. The Vision Encoder uses adaptive flexible sampling, while the LLM Decoder manages the interleaved "Think," "Tool," and "Answer" tokens.</em>
-</div>
+## 3. Student 尚未学会格式时调试完整 OPD 链路
 
-**Core Technical Innovations:**
+如果 student 能读取视频和问题，但自由生成还不能满足 OPD 标签格式，可以启用
+`student_from_target` 调试模式。该模式只旁路第一步的自由生成：
 
-*   **Task-Decoupled Attention Masking:** To prevent attention dispersion, TDAM isolates per-step concentration. During clue seeking, the model attends only to the global context; during answering, it focuses on high-resolution tool observations.
-*   **Verifiable Trajectory-Guided Reward:** To control context length and cost, we introduce a reward mechanism that balances exploration coverage with reasoning efficiency, encouraging the model to terminate precisely when evidence is sufficient.
+```text
+student 自由生成                              跳过
+data.student_target                           作为本轮轨迹
+轨迹解析和 grounding 合法性检查               执行
+按 grounding 读取和裁剪真实视频               执行
+构造 teacher 多轮 Observation 上下文          执行
+student 对 student_target 做 teacher forcing  执行并保留梯度
+teacher 对相同 target 做 teacher forcing      执行
+精确 KL、backward、optimizer、checkpoint       全部执行
+```
 
-## 📊 Data Construction: Pipeline and Seeker-173K
+这里不是把整条 `student_target` 简单拼进 teacher prompt。代码仍先解析轨迹，
+再按每个 grounding 拆成多个 task；teacher 逐 task 接收先前 action 和对应的真实
+裁剪视频，并对当前 target token 计算分布。
 
-Training a model to perform native interleaved tool invocation requires high-quality exploration trajectories, which are scarce in existing datasets. To address this, we developed a scalable automated data synthesis pipeline.
+仓库提供了一份单 step 调试配置：
 
-<div align="center">
-  <img src="src/Figure5.png" width="100%"/>
-  <br>
-  <em>The Data Construction Pipeline. We transform "Video-Question-Answer" triplets into explicit tool exploration trajectories via a four-stage process: Clue Localization, Validity Verification, Trajectory Generation, and Logical Consistency Checks.</em>
-</div>
+```bash
+python scripts/train_opd.py \
+  --config configs/opd_debug_target.yaml \
+  --reverse-kl-exact
+```
 
-**About Seeker-173K:**
+也可以在任意配置上临时启用：
 
-*   **Structure:** The dataset is stratified into a four-quadrant taxonomy based on evidence cardinality and visual saliency, covering tasks from "Single-Clue Direct Answering" to complex "Multi-Clue Tool Invocation".
-*   **Quality:** Human verification is enforced through random sampling in all stages. The pipeline rigorously filters out flawed instances, preserving only those with sound logic and factual visual evidence.
+```bash
+python scripts/train_opd.py \
+  --config configs/opd_small.yaml \
+  --reverse-kl-exact \
+  --student-from-target
+```
 
-## 📈 Performance
+日志会显示 `trajectory_source=student_target`。调试数据必须包含非空
+`student_target`。确认动态裁剪、teacher forward、精确 KL、backward 和
+checkpoint 都正常后，应关闭该选项；否则轨迹来自数据集，不是严格的 on-policy。
 
-<table border="1" style="font-size: 0.9em; width: 100%; text-align: center; border-collapse: collapse;">
-  <thead>
-    <tr>
-      <th rowspan="2" style="vertical-align: middle;">Methods</th>
-      <th rowspan="2" style="vertical-align: middle;">Sizes</th>
-      <th>VideoMME</th>
-      <th>MLVU</th>
-      <th>LVBench</th>
-      <th>LongVideoBench</th>
-      <th>VideoMMMU</th>
-      <th>MMVU</th>
-      <th>Video-Holmes</th>
-    </tr>
-    <tr>
-      <th>Avg</th>
-      <th>M-Avg</th>
-      <th>Avg</th>
-      <th>Avg</th>
-      <th>Overall</th>
-      <th>M-Avg</th>
-      <th>Avg</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td colspan="9" style="text-align: left;"><i>Open-source Single-Turn Video MLLMs</i></td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">Qwen2.5-VL</td>
-      <td>7B</td>
-      <td>65.1</td>
-      <td>70.2</td>
-      <td>45.3</td>
-      <td>56.0</td>
-      <td>47.4</td>
-      <td>61.3</td>
-      <td>34.7</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">LLaVA-Video</td>
-      <td>7B</td>
-      <td>63.3</td>
-      <td>70.8</td>
-      <td>-</td>
-      <td>58.2</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">Video-R1</td>
-      <td>7B</td>
-      <td>61.4</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>52.4</td>
-      <td>63.8</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">Rewatch-R1</td>
-      <td>7B</td>
-      <td>65.6</td>
-      <td>-</td>
-      <td>43.3</td>
-      <td>-</td>
-      <td>51.9</td>
-      <td>-</td>
-      <td>44.3</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">Video-Thinker</td>
-      <td>7B</td>
-      <td>-</td>
-      <td>-</td>
-      <td>37.0</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>43.2</td>
-    </tr>
-    <tr>
-      <td colspan="9" style="text-align: left;"><i>Open-source Decoupled Iterative Reasoning Video MLLMs</i></td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">Video-RTS</td>
-      <td>7B</td>
-      <td>63.0</td>
-      <td>-</td>
-      <td>-</td>
-      <td>56.6</td>
-      <td>52.7</td>
-      <td>66.4</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">Video-MTR</td>
-      <td>7B</td>
-      <td>59.0</td>
-      <td>59.7</td>
-      <td>38.6</td>
-      <td>56.4</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">LOVE-R1</td>
-      <td>7B</td>
-      <td>66.2</td>
-      <td>67.4</td>
-      <td>48.2</td>
-      <td>60.1</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td colspan="9" style="text-align: left;"><i>Open-source Native Multi-turn Tool Invocation Video MLLMs</i></td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">Conan</td>
-      <td>7B</td>
-      <td>60.5</td>
-      <td>63.4</td>
-      <td>39.2</td>
-      <td>56.6</td>
-      <td>-</td>
-      <td>-</td>
-      <td>44.6</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">LongVT</td>
-      <td>7B</td>
-      <td>64.3</td>
-      <td>-</td>
-      <td>41.3</td>
-      <td>-</td>
-      <td>45.4</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">Video-Zoomer</td>
-      <td>7B</td>
-      <td>65.2</td>
-      <td>-</td>
-      <td>41.5</td>
-      <td>57.7</td>
-      <td>52.2</td>
-      <td>-</td>
-      <td>-</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;"><b>Video-o3 (RL)</b></td>
-      <td><b>7B</b></td>
-      <td><b>66.1</b></td>
-      <td><b>71.9</b></td>
-      <td><b>47.5</b></td>
-      <td><b>59.3</b></td>
-      <td><b>50.0</b></td>
-      <td><b>66.9</b></td>
-      <td><b>46.1</b></td>
-    </tr>
-    <tr>
-      <td style="text-align: left;"><b>Video-o3 (SFT+RL)</b></td>
-      <td><b>7B</b></td>
-      <td><b>66.5</b></td>
-      <td><b>72.1</b></td>
-      <td><b>47.6</b></td>
-      <td><b>60.5</b></td>
-      <td><b>51.7</b></td>
-      <td><b>67.2</b></td>
-      <td><b>46.5</b></td>
-    </tr>
-  </tbody>
-</table>
+## 4. 配置
 
-**Comparison of our method with existing approaches on video question answering tasks across various benchmarks.** Video-o3 significantly outperforms previous methods in long video understanding benchmarks while also demonstrating strong performance in multiple video inference benchmarks.
+生产训练入口直接读取 [configs/opd_small.yaml](configs/opd_small.yaml)，包括：
 
-## 🖊️ Citation
+- student/teacher checkpoint；
+- 数据集和视频目录；
+- 原视频帧数及裁剪视频 FPS；
+- coarse/medium/fine 的动态视觉 token 配额；
+- generation 参数；
+- batch size、梯度累积、优化器、scheduler；
+- checkpoint 保存、保留数量和断点恢复；
+- mixed precision 和 DeepSpeed 配置。
 
-```bibtex
-@article{zeng2026video,
-  title={Video-o3: Native Interleaved Clue Seeking for Long Video Multi-Hop Reasoning},
-  author={Zeng, Xiangyu and Zhang, Zhiqiu and Zhu, Yuhan and Li, Xinhao and Wang, Zikang and Ma, Changlian and Zhang, Qingyu and Huang, Zizheng and Ouyang, Kun and Jiang, Tianxiang and others},
-  journal={arXiv preprint arXiv:2601.23224},
-  year={2026}
-}
+裁剪视频使用 `crop_fps`，不会再被原视频的固定 `nframes` 覆盖。
+
+## 5. 单卡训练
+
+安装 SFT/Video-o3 依赖后：
+
+```bash
+python scripts/train_opd.py \
+  --config configs/opd_small.yaml \
+  --reverse-kl-exact
+```
+
+最终可直接推理的模型和 processor 保存到 `train.output_dir`。训练中间状态保存为：
+
+```text
+output_dir/
+  checkpoint-20/
+  checkpoint-40/
+  opd_config.json
+  opd_trainer_state.json
+```
+
+中间 checkpoint 包含 Accelerate/DeepSpeed student 状态、optimizer、
+scheduler、随机数状态、processor 和训练进度；其内部文件布局取决于是否启用
+DeepSpeed。中间目录主要用于恢复训练，最终 `output_dir` 用于推理。
+
+## 6. DDP
+
+Accelerate 会自动将同一训练入口包装成 DDP：
+
+```bash
+accelerate launch --multi_gpu --num_processes 8 \
+  scripts/train_opd.py \
+  --config configs/opd_small.yaml \
+  --reverse-kl-exact
 ```
 
 
-## :dizzy: Acknowledgement
+## 7. DeepSpeed
 
-Thanks to the open source of the following projects:
-- [Qwen2.5-VL](https://arxiv.org/abs/2502.13923)
-- [Mini-o3](https://arxiv.org/abs/2509.07969)
-- [LongVT](https://arxiv.org/abs/2511.20785)
+在 YAML 中设置：
+
+```yaml
+train:
+  deepspeed: SFT/examples/deepspeed/ds_z2_config.json
+```
+
+然后仍使用 Accelerate 启动：
+
+```bash
+accelerate launch --multi_gpu --num_processes 8 \
+  scripts/train_opd.py \
+  --config configs/opd_small.yaml \
+  --reverse-kl-exact
+```
+
+仓库现有的 ZeRO-2、ZeRO-3 和 offload 配置位于
+`SFT/examples/deepspeed/`。teacher 始终冻结，每个进程保留一份 teacher；
+DeepSpeed 负责 student、optimizer 和梯度状态。
+
+## 8. 断点恢复
+
+恢复指定 checkpoint：
+
+```bash
+accelerate launch scripts/train_opd.py \
+  --config configs/opd_small.yaml \
+  --reverse-kl-exact \
+  --resume-from-checkpoint saves/opd-small/checkpoint-40
+```
+
+恢复最新 checkpoint：
+
+```bash
+accelerate launch scripts/train_opd.py \
+  --config configs/opd_small.yaml \
+  --reverse-kl-exact \
+  --resume-from-checkpoint latest
+```
+
+数据 sampler 由 `seed + epoch` 确定，恢复时会跳过已经完成的 microbatch。
+
+## 9. 测试 OPD 模型
+
+`test_opd.py` 加载最终 OPD student，生成一条 on-policy 轨迹，并检查：
+
+- 视频时长；
+- grounding 是否越界；
+- 标签和 JSON 格式；
+- 是否至少包含一次 grounding；
+- 可拆分出的 teacher task 数；
+- 最终 answer。
+
+```bash
+python scripts/test_opd.py \
+  --dataset data/opd_train.jsonl \
+  --model-path saves/opd-small \
+  --media-dir /path/to/videos \
+  --sample-index 0
+```
+
+确定性推理是默认行为；如需采样可增加 `--do-sample`。
+
+## 实现说明
+
+- 视频时长按 `decord → PyAV → OpenCV → ffprobe` 顺序自动探测并缓存；
+- student/teacher 的 target token id 和词表大小必须一致，否则精确 KL 直接报错；
+- 精确 KL 按 task 流式累加，不拼接所有 `[sequence, vocabulary]` logits；
+- checkpoint 使用 Accelerate 原生状态保存，因此支持单卡、DDP 和 DeepSpeed 恢复

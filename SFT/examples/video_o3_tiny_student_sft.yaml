@@ -1,0 +1,64 @@
+### model
+model_name_or_path: ../model/Video-o3_SFT_RL
+image_max_pixels: 262144
+# video_max_pixels: 602112
+# video_min_pixels: 100352
+video_max_pixels: 50176
+video_min_pixels: 50176
+# video_maxlen: 768
+video_maxlen: 8
+min_token_number: 1024
+max_token_number: 16384
+trust_remote_code: true
+# optional
+# flash_attn: fa2
+# enable_liger_kernel: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+freeze_vision_tower: true
+freeze_multi_modal_projector: false
+freeze_language_model: false
+# deepspeed: examples/deepspeed/ds_z1_config.json
+deepspeed: examples/deepspeed/ds_z3_offload_config.json
+
+### dataset
+dataset_dir: ../data
+dataset: tiny_student_sft
+media_dir: ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
+template: qwen2_vl
+# cutoff_len: 40000
+cutoff_len: 16000
+overwrite_cache: true
+preprocessing_batch_size: 1
+preprocessing_num_workers: 1
+dataloader_num_workers: 0
+max_samples: 4
+accelerator_config:
+  dispatch_batches: false
+# tokenized_path: saves/video-o3-tiny-student-sft/dataset-full
+
+### output
+output_dir: saves/video-o3-tiny-student-sft/ckpt
+logging_steps: 1
+save_steps: 20
+save_total_limit: 1
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+learning_rate: 1.0e-5
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+weight_decay: 0.0
+max_grad_norm: 1.0
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null

@@ -28,9 +28,9 @@ LOCAL_RANK = int(os.environ.get("LOCAL_RANK",1))
 GPU_LIST = get_gpu_list()
 
 print("--------------------------------")
-print(GPU_LIST)
-print(LOCAL_WORLD_SIZE)
-print(LOCAL_RANK)
+print(f"GPU_LIST: {GPU_LIST}")
+print(f"LOCAL_WORLD_SIZE: {LOCAL_WORLD_SIZE}")
+print(f"LOCAL_RANK: {LOCAL_RANK}")
 print("--------------------------------")
 
 if LOCAL_WORLD_SIZE > 1 and len(GPU_LIST) >1:

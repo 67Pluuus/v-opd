@@ -1,0 +1,49 @@
+### model
+model_name_or_path: saves/video-o3-tiny-student-sft/ckpt
+image_max_pixels: 262144
+video_max_pixels: 602112
+video_min_pixels: 100352
+video_maxlen: 768
+min_token_number: 1024
+max_token_number: 16384
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: false
+do_eval: false
+do_predict: true
+predict_with_generate: true
+finetuning_type: full
+
+### dataset
+dataset_dir: ../data
+# Key registered in ../data/dataset_info.json.
+eval_dataset: student_sft
+media_dir: ../dataset/LLaVA-Video-178K/2_3_m_youtube_v0_1/liwei_youtube_videos/videos/youtube_video_2024
+template: qwen2_vl
+cutoff_len: 40000
+overwrite_cache: true
+preprocessing_batch_size: 1
+preprocessing_num_workers: 1
+dataloader_num_workers: 0
+accelerator_config:
+  dispatch_batches: false
+tokenized_path: null
+
+### output
+output_dir: saves/video-o3-tiny-student-sft/infer
+logging_steps: 1
+overwrite_output_dir: true
+report_to: none
+
+### batch inference
+per_device_eval_batch_size: 1
+bf16: true
+
+### generation
+do_sample: false
+num_beams: 1
+max_new_tokens: 1536
+repetition_penalty: 1.0
+skip_special_tokens: true

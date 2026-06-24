@@ -1,0 +1,68 @@
+Debug: Current working directory: /mnt/afs/L202500447/Video-o3/Eval
+Debug: All received parameters:
+  $1 (DATA): 'Video-MME_2fps_limit_768'
+  $2 (MODEL): 'video-o3'
+  $3 (MODE): 'all'
+  $4 (REUSE): '--reuse'
+  $5 (NPROC_PER_NODE): '1'
+  $6 (WORK_DIR): './runlogs/video-o3/outputs'
+  Total number of parameters: 6
+
+CondaError: Run 'conda init' before 'conda activate'
+
+Run command: torchrun --nproc-per-node=1 run.py --data Video-MME_2fps_limit_768 --model video-o3 --mode all --work-dir ./runlogs/video-o3/outputs --reuse
+--------------------------------
+[0, 1]
+1
+0
+--------------------------------
+The cache for model files in Transformers v4.22.0 has been updated. Migrating your old cache. This is a one-time only operation. You can interrupt this and resume the migration later on by calling `transformers.utils.move_cache()`.
+0it [00:00, ?it/s]0it [00:00, ?it/s]
+Please install pyav to use video processing functions.
+Traceback (most recent call last):
+  File "/mnt/afs/L202500447/Video-o3/Eval/run.py", line 51, in <module>
+    from vlmeval.config import supported_VLM
+  File "/mnt/afs/L202500447/Video-o3/Eval/vlmeval/__init__.py", line 13, in <module>
+    from .api import *
+  File "/mnt/afs/L202500447/Video-o3/Eval/vlmeval/api/__init__.py", line 4, in <module>
+    from .qwen_vl_api import QwenVLWrapper, QwenVLAPI, Qwen2VLAPI
+  File "/mnt/afs/L202500447/Video-o3/Eval/vlmeval/api/qwen_vl_api.py", line 8, in <module>
+    from vlmeval.vlm.qwen2_vl.prompt import Qwen2VLPromptMixin
+  File "/mnt/afs/L202500447/Video-o3/Eval/vlmeval/vlm/__init__.py", line 117, in <module>
+    from .liquid import LFM2VL
+  File "/mnt/afs/L202500447/Video-o3/Eval/vlmeval/vlm/liquid.py", line 4, in <module>
+    from transformers import AutoProcessor, AutoModelForImageTextToText
+ImportError: cannot import name 'AutoModelForImageTextToText' from 'transformers' (/mnt/afs/L202500447/miniconda3/envs/eval_video_o3/lib/python3.11/site-packages/transformers/__init__.py)
+E0622 04:37:06.944000 14745 site-packages/torch/distributed/elastic/multiprocessing/api.py:988] failed (exitcode: 1) local_rank: 0 (pid: 14844) of binary: /mnt/afs/L202500447/miniconda3/envs/eval_video_o3/bin/python3.11
+Traceback (most recent call last):
+  File "/mnt/afs/L202500447/miniconda3/envs/eval_video_o3/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/mnt/afs/L202500447/miniconda3/envs/eval_video_o3/lib/python3.11/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 367, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/mnt/afs/L202500447/miniconda3/envs/eval_video_o3/lib/python3.11/site-packages/torch/distributed/run.py", line 1016, in main
+    run(args)
+  File "/mnt/afs/L202500447/miniconda3/envs/eval_video_o3/lib/python3.11/site-packages/torch/distributed/run.py", line 1007, in run
+    elastic_launch(
+  File "/mnt/afs/L202500447/miniconda3/envs/eval_video_o3/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 191, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/afs/L202500447/miniconda3/envs/eval_video_o3/lib/python3.11/site-packages/torch/distributed/launcher/api.py", line 371, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+run.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-06-22_04:37:06
+  host      : app-d2597c43f65146d2900930a186480809-757dbffbd-5742h
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 14844) 
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

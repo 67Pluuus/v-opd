@@ -31,7 +31,7 @@ video_o3_series = {
     # SFT+RL
     "video-o3": partial(
         VideoO3Chat,
-        model_path = "path-of-ckpt",
+        model_path = "/mnt/afs/L202500447/Video-o3/model/Video-o3_SFT_RL",
         min_pixels=20* 28 * 28,
         max_pixels=768 * 28 * 28,
         total_pixels=16384 * 28 * 28,
@@ -708,11 +708,11 @@ emu_series = {
     "emu3_gen": partial(Emu3_gen, model_path="BAAI/Emu3-Gen"),
 }
 
-granite_vision_series = {
-    'granite_vision_3.1_2b_preview': partial(GraniteVision3, model_path="ibm-granite/granite-vision-3.1-2b-preview"),
-    'granite_vision_3.2_2b': partial(GraniteVision3, model_path="ibm-granite/granite-vision-3.2-2b"),
-    'granite_vision_3.3_2b': partial(GraniteVision3, model_path="ibm-granite/granite-vision-3.3-2b"),
-}
+# granite_vision_series = {
+#     'granite_vision_3.1_2b_preview': partial(GraniteVision3, model_path="ibm-granite/granite-vision-3.1-2b-preview"),
+#     'granite_vision_3.2_2b': partial(GraniteVision3, model_path="ibm-granite/granite-vision-3.2-2b"),
+#     'granite_vision_3.3_2b': partial(GraniteVision3, model_path="ibm-granite/granite-vision-3.3-2b"),
+# }
 
 mmalaya_series = {
     "MMAlaya": partial(MMAlaya, model_path="DataCanvas/MMAlaya"),
@@ -2007,8 +2007,9 @@ for group in interns1_groups:
     
 supported_VLM = {}
 
+# 删除granite_vision_series
 model_groups = [
-    ungrouped, o1_apis, api_models, xtuner_series, qwen_series, llava_series, granite_vision_series,
+    ungrouped, o1_apis, api_models, xtuner_series, qwen_series, llava_series, 
     internvl_series, yivl_series, xcomposer_series, minigpt4_series, 
     idefics_series, instructblip_series, deepseekvl_series, deepseekvl2_series, 
     janus_series, minicpm_series, cogvlm_series, wemm_series, cambrian_series, 

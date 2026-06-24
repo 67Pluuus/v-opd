@@ -18,7 +18,7 @@ REUSE_FLAG=${4:-""}
 NPROC_PER_NODE=${5:-"4"}
 WORK_DIR=${6:-"./outputs"}
 
-conda activate eval_video_o3
+# conda activate eval_video_o3
 
 export OMP_NUM_THREADS=1
 export DISABLE_ADDMM_CUDA_LT=1

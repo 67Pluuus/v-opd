@@ -1,0 +1,98 @@
+Metadata-Version: 2.4
+Name: vlmeval
+Version: 0.1.0
+Summary: OpenCompass VLM Evaluation Kit
+Author: Haodong Duan
+Author-email: dhd.efz@gmail.com
+Maintainer: Haodong Duan
+Maintainer-email: dhd.efz@gmail.com
+Keywords: AI,NLP,in-context learning
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Requires-Python: >=3.7.0
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: accelerate
+Requires-Dist: datasets
+Requires-Dist: dotenv
+Requires-Dist: einops
+Requires-Dist: google-genai
+Requires-Dist: gradio
+Requires-Dist: huggingface_hub
+Requires-Dist: imageio
+Requires-Dist: ipdb
+Requires-Dist: json_repair
+Requires-Dist: math-verify
+Requires-Dist: matplotlib
+Requires-Dist: nltk
+Requires-Dist: numpy
+Requires-Dist: omegaconf
+Requires-Dist: openai
+Requires-Dist: opencv-python>=4.7.0.72
+Requires-Dist: openpyxl
+Requires-Dist: pandas
+Requires-Dist: pillow
+Requires-Dist: portalocker
+Requires-Dist: protobuf
+Requires-Dist: pylatexenc==2.10
+Requires-Dist: python-dotenv
+Requires-Dist: qwen_vl_utils
+Requires-Dist: requests
+Requires-Dist: rich
+Requires-Dist: scikit-learn
+Requires-Dist: sentencepiece
+Requires-Dist: setuptools
+Requires-Dist: sty
+Requires-Dist: sympy
+Requires-Dist: tabulate
+Requires-Dist: tiktoken
+Requires-Dist: timeout-decorator
+Requires-Dist: timm
+Requires-Dist: torch
+Requires-Dist: torchvision
+Requires-Dist: tqdm
+Requires-Dist: transformers
+Requires-Dist: typing_extensions
+Requires-Dist: validators
+Requires-Dist: xlsxwriter
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: keywords
+Dynamic: license-file
+Dynamic: maintainer
+Dynamic: maintainer-email
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+
+---
+
+# Evaluation
+
+## Preparation
+
+1. Install [VLMEvalkit](https://github.com/open-compass/VLMEvalKit). For details on installation, please refer to VLMEvalkit_README.md.
+```bash
+conda create -n eval_video_o3
+conda activate eval_video_o3
+pip install -e .
+```
+2. Download benchmark datasets: Video-MME, MLVU, LVBench, LongVideoBench, VideoMMMU, MMVU, and Video-Holmes. Add the dataset paths to the `.env` file.
+3. Download the model checkpoints and add their paths to `./vlmeval/config.py`.
+
+## Usage
+
+The complete evaluation scripts can be found in the ./scripts folder.You can start the evaluation by running:
+
+```bash
+bash scripts/run_eval.sh
+```

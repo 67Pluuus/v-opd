@@ -1,0 +1,12 @@
+# Install a CUDA-compatible torch/torchvision build first.
+transformers>=4.49.0,<=4.57.1,!=4.52.0,!=4.57.0
+accelerate>=1.3.0,<=1.11.0
+PyYAML>=6.0
+safetensors<=0.5.3
+av
+torchvision
+
+# Optional:
+# deepspeed>=0.10.0,<=0.16.9
+# decord
+# opencv-python-headless

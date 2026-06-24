@@ -29,6 +29,7 @@ src/llamafactory/data/__init__.py
 src/llamafactory/data/collator.py
 src/llamafactory/data/converter.py
 src/llamafactory/data/data_utils.py
+src/llamafactory/data/dataset_merger.py
 src/llamafactory/data/formatter.py
 src/llamafactory/data/loader.py
 src/llamafactory/data/mm_plugin.py
